@@ -1,5 +1,8 @@
 // src/index.ts
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   Client,
   Colors,
   EmbedBuilder,
@@ -61,6 +64,8 @@ const commandMap: { [key: string]: (interaction: any) => Promise<void> } = {
 client.on(Events.MessageCreate, async (message) => {
   await handleMessage(message);
 });
+
+// (リアクション方式は廃止。ボタンは messageHandler で直接送信します)
 
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
   if (interaction.isButton()) {
