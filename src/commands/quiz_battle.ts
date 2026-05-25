@@ -120,8 +120,7 @@ export const quizBattleCommand = async (
     );
 
     await interaction.reply({
-      content:
-        "🏁 クイズバトルの受け付けが始まりました！ このメッセージにリアクションした人が参加者です。\n受付時間は1分です。\n途中で終わりたい場合は /break と打ってください。",
+      content: `🏁 クイズバトルの受け付けが始まりました！ このメッセージにリアクションした人が参加者です。\n受付時間は1分です。\n途中で終わりたい場合は /break と打ってください。\n\n（ルール）\nゴールライン：${goalLine}問\n回答時間：${answerWindowSeconds}秒`,
     });
 
     const acceptanceMessage = await interaction.fetchReply();
