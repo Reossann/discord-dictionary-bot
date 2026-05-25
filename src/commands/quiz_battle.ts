@@ -119,6 +119,16 @@ export const quizBattleCommand = async (
       true,
     );
 
+    // 荒らし対策: 回答受付時間が5秒未満の場合は拒否する
+    if (answerWindowSeconds < 5) {
+      await interaction.reply({
+        content: "❌ 回答受付時間は最低でも5秒以上にしてください。",
+        flags: MessageFlags.Ephemeral,
+      });
+      releaseLock();
+      return;
+    }
+
     await interaction.reply({
       content: `🏁 クイズバトルの受け付けが始まりました！ このメッセージにリアクションした人が参加者です。\n受付時間は1分です。\n途中で終わりたい場合は /break と打ってください。\n\n（ルール）\nゴールライン：${goalLine}問\n回答時間：${answerWindowSeconds}秒`,
     });
