@@ -1,8 +1,5 @@
 // src/index.ts
 import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
   Client,
   Colors,
   EmbedBuilder,
@@ -56,6 +53,7 @@ const commandMap: { [key: string]: (interaction: any) => Promise<void> } = {
   search: commands.searchCommand,
   quiz: commands.quizCommand,
   quiz_battle: commands.quizBattleCommand,
+  break: commands.breakCommand,
   "wiki-quiz": commands.wikiQuizCommand,
   introduction: commands.introductionCommand,
   request: commands.requestCommand,

@@ -5,6 +5,7 @@ export interface QuizBattleSession {
   scores: Map<string, number>;
   goalLine: number;
   answerWindowSeconds: number;
+  cancelRequested: boolean;
 }
 
 const activeQuizBattlesByChannel = new Map<string, QuizBattleSession>();
@@ -15,6 +16,18 @@ export function startQuizBattleSession(session: QuizBattleSession): void {
 
 export function endQuizBattleSession(channelId: string): void {
   activeQuizBattlesByChannel.delete(channelId);
+}
+
+export function requestQuizBattleCancel(channelId: string): boolean {
+  const session = activeQuizBattlesByChannel.get(channelId);
+  if (!session) return false;
+
+  session.cancelRequested = true;
+  return true;
+}
+
+export function isQuizBattleCancelRequested(channelId: string): boolean {
+  return activeQuizBattlesByChannel.get(channelId)?.cancelRequested ?? false;
 }
 
 export function isQuizBattleChannelActive(channelId: string): boolean {

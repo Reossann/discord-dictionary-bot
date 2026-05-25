@@ -121,7 +121,7 @@ export const quizBattleCommand = async (
 
     await interaction.reply({
       content:
-        "🏁 クイズバトルの受け付けが始まりました！ このメッセージにリアクションした人が参加者です。",
+        "🏁 クイズバトルの受け付けが始まりました！ このメッセージにリアクションした人が参加者です。\n受付時間は1分です。\n途中で終わりたい場合は /break と打ってください。",
     });
 
     const acceptanceMessage = await interaction.fetchReply();
@@ -143,44 +143,59 @@ export const quizBattleCommand = async (
       return;
     }
 
-    await acceptanceMessage.react("✅").catch(() => undefined);
+    const session = {
+      guildId,
+      channelId: channel.id,
+      participants: new Set<string>(),
+      scores: new Map<string, number>(),
+      goalLine,
+      answerWindowSeconds,
+      cancelRequested: false,
+    };
 
-    const participantIds = new Set<string>();
+    startQuizBattleSession(session);
+
+    await acceptanceMessage.react("✅").catch(() => undefined);
     const reactionCollector = acceptanceMessage.createReactionCollector({
       time: BATTLE_RECEPTION_MS,
     });
 
+    const acceptanceCancelWatcher = setInterval(() => {
+      if (!session.cancelRequested) return;
+      reactionCollector.stop("cancelled");
+    }, 500);
+
     reactionCollector.on("collect", async (_reaction, user) => {
       if (user.bot) return;
-      participantIds.add(user.id);
+      session.participants.add(user.id);
     });
 
     await new Promise<void>((resolve) => {
       reactionCollector.on("end", () => resolve());
     });
 
-    participantIds.delete(interaction.client.user?.id || "");
+    clearInterval(acceptanceCancelWatcher);
 
-    if (participantIds.size === 0) {
-      await channel.send("❌ 参加者がいなかったのでクイズバトルを終了します。");
+    if (session.cancelRequested) {
+      await channel.send("🛑 クイズバトルは /break により中断されました。");
+      endQuizBattleSession(channel.id);
       releaseLock();
       return;
     }
 
-    const sessionScores = new Map<string, number>();
-    participantIds.forEach((userId) => sessionScores.set(userId, 0));
+    session.participants.delete(interaction.client.user?.id || "");
 
-    startQuizBattleSession({
-      guildId,
-      channelId: channel.id,
-      participants: participantIds,
-      scores: sessionScores,
-      goalLine,
-      answerWindowSeconds,
-    });
+    if (session.participants.size === 0) {
+      await channel.send("❌ 参加者がいなかったのでクイズバトルを終了します。");
+      endQuizBattleSession(channel.id);
+      releaseLock();
+      return;
+    }
+
+    session.participants.forEach((userId) => session.scores.set(userId, 0));
 
     await channel.send(
-      `🎮 **クイズバトル開始！** 参加者: ${participantIds.size}人 / ゴールライン: ${goalLine}問 / 回答猶予: ${answerWindowSeconds}秒`,
+      `🎮 **クイズバトル開始！** 参加者: ${session.participants.size}人 / ゴールライン: ${goalLine}問 / 回答猶予: ${answerWindowSeconds}秒`,
     );
 
     let battleFinished = false;
@@ -194,6 +209,11 @@ export const quizBattleCommand = async (
         await channel.send(
           "❌ まだ単語が登録されていません。クイズバトルを終了します。",
         );
+        break;
+      }
+
+      if (session.cancelRequested) {
+        await channel.send("🛑 クイズバトルは /break により中断されました。");
         break;
       }
 
@@ -216,9 +236,14 @@ export const quizBattleCommand = async (
 
       const questionCollector = channel.createMessageCollector({
         filter: (message: Message) =>
-          !message.author.bot && participantIds.has(message.author.id),
+          !message.author.bot && session.participants.has(message.author.id),
         time: answerWindowSeconds * 1000,
       });
+
+      const battleCancelWatcher = setInterval(() => {
+        if (!session.cancelRequested) return;
+        questionCollector.stop("cancelled");
+      }, 500);
 
       let answered = false;
       const roundResult = await new Promise<"answered" | "timeout">(
@@ -236,8 +261,8 @@ export const quizBattleCommand = async (
 
             answered = true;
             const currentScore =
-              (sessionScores.get(message.author.id) || 0) + 1;
-            sessionScores.set(message.author.id, currentScore);
+              (session.scores.get(message.author.id) || 0) + 1;
+            session.scores.set(message.author.id, currentScore);
 
             await message.react("⭕").catch(() => undefined);
             await message
@@ -258,21 +283,28 @@ export const quizBattleCommand = async (
         },
       );
 
+      clearInterval(battleCancelWatcher);
+
+      if (session.cancelRequested) {
+        await channel.send("🛑 クイズバトルは /break により中断されました。");
+        break;
+      }
+
       if (roundResult === "timeout") {
         await channel.send(
           `⏰ 時間切れ！ 正解は **「${titleText}」** でした。`,
         );
       }
 
-      const winner = Array.from(sessionScores.entries()).find(
-        ([, score]) => score >= goalLine,
+      const winner = Array.from(session.scores.entries()).find(
+        (entry) => entry[1] >= goalLine,
       );
 
       if (winner) {
         battleFinished = true;
         const [winnerId, winnerScore] = winner;
         await channel.send(
-          `🏆 **クイズバトル終了！** 勝者は <@${winnerId}> です。\n最終スコア: ${winnerScore}点\n\n**最終順位**\n${getScoreBoard(sessionScores)}`,
+          `🏆 **クイズバトル終了！** 勝者は <@${winnerId}> です。\n最終スコア: ${winnerScore}点\n\n**最終順位**\n${getScoreBoard(session.scores)}`,
         );
       }
     }

@@ -9,6 +9,7 @@ import {
 } from "./commands/add";
 import { data as addCalenderData } from "./commands/add_calender";
 import { data as addWikiData } from "./commands/add_wiki";
+import { data as breakData } from "./commands/break";
 import { data as calenderListData } from "./commands/calender_list";
 import { contextDeleteData } from "./commands/context_delete";
 import { data as deleteData } from "./commands/delete";
@@ -40,6 +41,7 @@ const commands = [
   addWikiData.toJSON(),
   quizData.toJSON(),
   quizBattleData.toJSON(),
+  breakData.toJSON(),
   wikiQuizData.toJSON(),
   escapeData.toJSON(),
   deleteData.toJSON(),
