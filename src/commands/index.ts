@@ -14,6 +14,7 @@ export { escapeCommand } from "./escape";
 export { introductionCommand } from "./introduction";
 export { listCommand } from "./list";
 export { quizCommand } from "./quiz";
+export { quizBattleCommand } from "./quiz_battle";
 export { requestCommand } from "./request";
 export { searchCommand } from "./search";
 export { updateCommand } from "./update";

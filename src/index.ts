@@ -28,13 +28,14 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions,
   ],
 });
 
 client.once(Events.ClientReady, (c) => {
   console.log(`準備OK！ ${c.user.tag} が起動しました。`);
   console.log(
-    `コマンド同期完了: /add, /add-calender, /update-calender, /calender-list, /delete-calender, /add-wiki, /quiz, /wiki-quiz, /escape, /list, /delete, /update, /search, /introduction, /request, context-delete が使えます`,
+    `コマンド同期完了: /add, /add-calender, /update-calender, /calender-list, /delete-calender, /add-wiki, /quiz, /quiz_battle, /wiki-quiz, /escape, /list, /delete, /update, /search, /introduction, /request, context-delete が使えます`,
   );
 });
 
@@ -51,6 +52,7 @@ const commandMap: { [key: string]: (interaction: any) => Promise<void> } = {
   update: commands.updateCommand,
   search: commands.searchCommand,
   quiz: commands.quizCommand,
+  quiz_battle: commands.quizBattleCommand,
   "wiki-quiz": commands.wikiQuizCommand,
   introduction: commands.introductionCommand,
   request: commands.requestCommand,

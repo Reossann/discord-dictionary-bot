@@ -11,6 +11,7 @@ import {
   getPrimaryTitle,
   normalizeContextText,
 } from "../utils/contextScoring";
+import { isQuizBattleChannelActive } from "../utils/quizBattleState";
 import { isQuizChannelActive } from "../utils/quizState";
 
 // ⏱️ タイマー用のメモ帳
@@ -158,6 +159,7 @@ export const handleMessage = async (message: Message) => {
   if (message.author.bot) return;
   if (!message.guild) return;
   if (isQuizChannelActive(message.channelId)) return;
+  if (isQuizBattleChannelActive(message.channelId)) return;
 
   try {
     if (message.channel.isThread()) {
